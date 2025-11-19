@@ -40,7 +40,7 @@ public class Suite extends Room{
             return this;
         }
 
-        public Suite copy(){
+        public Suite build(){
             return new Suite(this);
         }
     }

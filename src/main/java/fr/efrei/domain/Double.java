@@ -32,7 +32,7 @@ public class Double extends Room{
             return this;
         }
 
-        public Double copy(){
+        public Double build(){
             return new Double(this);
         }
     }
