@@ -1,5 +1,7 @@
 package fr.efrei.domain;
 
+import java.util.List;
+
 public class Single extends Room{
     private String bedType;
 
@@ -9,6 +11,7 @@ public class Single extends Room{
         private int roomNumber;
         private double pricePerNight;
         private String bedType;
+        private List<Reservation> reservations;
 
         public Builder setRoomNumber(int roomNumber){
             this.roomNumber = roomNumber;
@@ -25,10 +28,16 @@ public class Single extends Room{
             return this;
         }
 
+        public Builder setReservations(List<Reservation> reservations){
+            this.reservations = reservations;
+            return this;
+        }
+
         public Builder copy(Single single){
             this.roomNumber = single.roomNumber;
             this.pricePerNight = single.pricePerNight;
             this.bedType = single.bedType;
+            this.reservations = single.reservations;
             return this;
         }
 
