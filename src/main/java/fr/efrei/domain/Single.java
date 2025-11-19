@@ -32,7 +32,7 @@ public class Single extends Room{
             return this;
         }
 
-        public Single copy(){
+        public Single build(){
             return new Single(this);
         }
     }
