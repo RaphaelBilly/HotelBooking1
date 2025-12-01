@@ -14,20 +14,20 @@ public class Suite extends Room{
         this.reservations = builder.reservations;
     }
 
+    public int getNbRooms() {
+        return nbRooms;
+    }
+
+    public int getNbGuests() {
+        return nbGuests;
+    }
+
     public static class Builder{
         private int roomNumber;
         private double pricePerNight;
         private int nbRooms;
         private int nbGuests;
         private List<Reservation> reservations;
-
-        public int getNbRooms() {
-            return nbRooms;
-        }
-
-        public int getNbGuests() {
-            return nbGuests;
-        }
 
         public Builder setRoomNumber(int roomNumber){
             this.roomNumber = roomNumber;
