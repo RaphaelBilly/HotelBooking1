@@ -3,16 +3,19 @@ package fr.efrei.repository;
 import fr.efrei.domain.Reservation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ReservationRepository implements IReservationRepository {
 
     // Singleton
     private static IReservationRepository repository = null;
-    private List<Reservation> reservationList;
+    //private List<Reservation> reservationList; //I remove List to get a better complexity with hashMap
+    private Map<Integer, Reservation> reservationMap;
 
     private ReservationRepository() {
-        reservationList = new ArrayList<>();
+        reservationMap = new HashMap<>();
     }
 
     public static IReservationRepository getRepository() {
@@ -22,16 +25,30 @@ public class ReservationRepository implements IReservationRepository {
         return repository;
     }
 
-    @Override
+    /*@Override //WITH LIST
     public Reservation create(Reservation reservation) {
         if (reservation == null)
             return null;
 
         boolean success = reservationList.add(reservation);
         return success ? reservation : null;
+    }*/
+
+    //with map
+    @Override
+    public Reservation create(Reservation reservation) {
+        if (reservation == null)
+            return null;
+
+        if (reservationMap.containsKey(reservation.getReservationId())) {
+            return null;
+        }
+
+        reservationMap.put(reservation.getReservationId(), reservation);
+        return reservation;
     }
 
-    @Override
+    /*@Override
     public Reservation read(Integer integer) {
         return null;
     }
@@ -44,7 +61,13 @@ public class ReservationRepository implements IReservationRepository {
             }
         }
         return null;
+    }*/
+
+    @Override
+    public Reservation read(Integer id) {
+        return reservationMap.get(id);  //better complexity O(1) instead of O(n)
     }
+
 
 
     @Override
@@ -52,30 +75,21 @@ public class ReservationRepository implements IReservationRepository {
         if (reservation == null)
             return null;
 
-        Reservation old = read(reservation.getReservationId());
-        if (old == null)
+        if (!reservationMap.containsKey(reservation.getReservationId())) {
             return null;
+        }
 
-        int index = reservationList.indexOf(old);
-        reservationList.set(index, reservation);
+        reservationMap.put(reservation.getReservationId(), reservation);
         return reservation;
     }
 
     @Override
-    public boolean delete(Integer integer) {
-        return false;
-    }
-
-    @Override
-    public boolean delete(int id) {
-        Reservation toDelete = read(id);
-        if (toDelete == null)
-            return false;
-        return reservationList.remove(toDelete);
+    public boolean delete(Integer id) {
+        return reservationMap.remove(id) != null;
     }
 
     @Override
     public List<Reservation> getAll() {
-        return reservationList;
+        return new ArrayList<>(reservationMap.values());
     }
 }
