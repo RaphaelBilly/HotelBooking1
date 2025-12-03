@@ -194,5 +194,108 @@ public class Main {
             System.out.println("- Age (must be 18+)");
         }
     }
+
+    private static void makeReservation() {
+        System.out.println("\n NEW RESERVATION ");
+
+        // List all guests
+        IGuestRepository guestRepo = GuestRepository.getRepository();
+        List<Guest> guests = guestRepo.getAll();
+        if (guests.isEmpty()) {
+            System.out.println("No guests registered yet. Please register a guest first.");
+            return;
+        }
+
+        System.out.println("Registered guests:");
+        for (int i = 0; i < guests.size(); i++) {
+            Guest g = guests.get(i);
+            System.out.println((i+1) + ". " + g.getFirstName() + " " + g.getLastName() +
+                    " (ID: " + g.getId() + ")");
+        }
+
+        System.out.print("\nSelect guest by number: ");
+        int guestIndex = getIntInput("") - 1;
+
+        if (guestIndex < 0 || guestIndex >= guests.size()) {
+            System.out.println("Invalid selection!");
+            return;
+        }
+
+        Guest selectedGuest = guests.get(guestIndex);
+        makeReservationForGuest(selectedGuest);
+    }
+
+    private static void makeReservationForGuest(Guest guest) {
+        System.out.println("\n RESERVATION FOR " + guest.getFirstName() + " " + guest.getLastName() + " ===");
+
+        // Demander les dates d'abord
+        System.out.print("Arrival date (YYYY-MM-DD): ");
+        String arrivalStr = scanner.nextLine();
+
+        System.out.print("Departure date (YYYY-MM-DD): ");
+        String departureStr = scanner.nextLine();
+
+        Date arrival, departure;
+        try {
+            arrival = dateFormat.parse(arrivalStr);
+            departure = dateFormat.parse(departureStr);
+        } catch (Exception e) {
+            System.out.println("Invalid date format!");
+            return;
+        }
+
+        // Check if departure is after arrival
+        if (!departure.after(arrival)) {
+            System.out.println("ERROR: Departure must be after arrival!");
+            return;
+        }
+
+        // Show available rooms for these dates
+        showAvailableRoomsForDates(arrival, departure);
+
+        System.out.print("\nEnter room number: ");
+        int roomNumber = getIntInput("");
+
+        // Find room
+        Room room = findRoomByNumber(roomNumber);
+        if (room == null) {
+            System.out.println("ERROR: Room not found!");
+            return;
+        }
+
+        // Check room availability
+        if (!isRoomAvailableForPeriod(room, arrival, departure)) {
+            System.out.println("ERROR: Room not available for selected dates!");
+            return;
+        }
+
+        // Create reservation
+        Reservation reservation = ReservationFactory.createReservation(arrival, departure);
+        if (reservation != null) {
+            IReservationRepository resRepo = ReservationRepository.getRepository();
+            Reservation savedReservation = resRepo.create(reservation);
+            if (savedReservation != null) {
+                // Add reservation to room
+                addReservationToRoom(room, savedReservation);
+
+                System.out.println("\nSUCCESS: Reservation created!");
+                System.out.println("Reservation ID: " + savedReservation.getReservationId());
+                System.out.println("Room: " + room.getRoomNumber());
+                System.out.println("Price per night: €" + room.getPricePerNight());
+
+                // Calculate total
+                long nights = (departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24);
+                double total = nights * room.getPricePerNight();
+                System.out.println("Total for " + nights + " nights: €" + total);
+
+                // Ask to view calendar
+                System.out.print("\nView room calendar? (yes/no): ");
+                String viewCalendar = scanner.nextLine().toLowerCase();
+                if (viewCalendar.equals("yes") || viewCalendar.equals("y")) {
+                    displaySingleRoomCalendar(room);
+                }
+            }
+        }
+    }
 }//to delete
 
