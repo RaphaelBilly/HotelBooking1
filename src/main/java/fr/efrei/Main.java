@@ -297,5 +297,154 @@ public class Main {
             }
         }
     }
-}//to delete
 
+    private static void checkOut() { //
+        System.out.println("\n-   CHECK-OUT   -");
+
+        System.out.print("Enter reservation ID: ");
+        int reservationId = getIntInput("");
+
+        IReservationRepository resRepo = ReservationRepository.getRepository();
+        Reservation reservation = resRepo.read(reservationId);
+        if (reservation == null) {
+            System.out.println("ERROR: Reservation not found!");
+            return;
+        }
+
+        System.out.println("Reservation found:");
+        System.out.println("- Arrival: " + reservation.getArrival());
+        System.out.println("- Departure: " + reservation.getDeparture());
+
+        // Find room
+        Room room = findRoomByReservation(reservation);
+        if (room != null) {
+            System.out.println("- Room: " + room.getRoomNumber());
+        }
+
+        System.out.print("\nConfirm check-out? (yes/no): ");
+        String confirm = scanner.nextLine().toLowerCase();
+
+        if (confirm.equals("yes") || confirm.equals("y")) {
+            // Find and clear room
+            if (room != null) {
+                removeReservationFromRoom(room, reservation);
+            }
+
+            // Delete reservation
+            boolean deleted = resRepo.delete(reservationId);
+            if (deleted) {
+                System.out.println("SUCCESS: Check-out completed!");
+                if (room != null) {
+                    System.out.println("Room " + room.getRoomNumber() + " is now available.");
+                }
+            }
+        }
+    }
+
+    private static void viewHotelStatus() {//
+        System.out.println("\n-   HOTEL STATUS   -");
+
+        // Guest statistics
+        IGuestRepository guestRepo = GuestRepository.getRepository();
+        List<Guest> guests = guestRepo.getAll();
+        System.out.println("Total guests: " + guests.size());
+
+        // Reservation statistics
+        IReservationRepository resRepo = ReservationRepository.getRepository();
+        List<Reservation> reservations = resRepo.getAll();
+        System.out.println("Active reservations: " + reservations.size());
+
+        // Room statistics
+        ISingleRepository singleRepo = SingleRepository.getRepository();
+        IDoubleRepository doubleRepo = DoubleRepository.getRepository();
+        ISuiteRepository suiteRepo = SuiteRepository.getRepository();
+
+        List<Single> singles = singleRepo.getAll();
+        List<DoubleRoom> doubleRooms = doubleRepo.getAll();
+        List<Suite> suites = suiteRepo.getAll();
+
+        System.out.println("\n-   ROOMS   -");
+        System.out.println("Single rooms: " + singles.size());
+        System.out.println("Double rooms: " + doubleRooms.size());
+        System.out.println("Suites: " + suites.size());
+        System.out.println("Total rooms: " + (singles.size() + doubleRooms.size() + suites.size()));
+
+        // Rooms available today
+        Date today = new Date();
+        Date tomorrow = new Date(today.getTime() + (1000 * 60 * 60 * 24));
+        int availableToday = countAvailableRooms(today, tomorrow);
+        System.out.println("Rooms available for check-in today: " + availableToday);
+
+        // Recent guests
+        if (!guests.isEmpty()) {
+            System.out.println("\n-   RECENT GUESTS   -");
+            int limit = Math.min(3, guests.size());
+            for (int i = 0; i < limit; i++) {
+                Guest g = guests.get(i);
+                System.out.println("- " + g.getFirstName() + " " + g.getLastName() +
+                        " (" + g.getNationality() + ") - ID: " + g.getId());
+            }
+        }
+    }
+
+    private static void searchGuests() {//
+        System.out.println("\nSEARCH GUESTS");
+        System.out.println("1. Search by last name");
+        System.out.println("2. Search by nationality");
+        System.out.println("3. View all guests");
+        System.out.println("4. Search by passport number");
+
+        int choice = getIntInput("Your choice: ");
+
+        IGuestRepository guestRepo = GuestRepository.getRepository();
+        List<Guest> guests = guestRepo.getAll();
+        List<Guest> results = new ArrayList<>();
+
+        switch (choice) {
+            case 1:
+                System.out.print("Enter last name: ");
+                String lastName = scanner.nextLine();
+                for (Guest g : guests) {
+                    if (g.getLastName().toLowerCase().contains(lastName.toLowerCase())) {
+                        results.add(g);
+                    }
+                }
+                break;
+            case 2:
+                System.out.print("Enter nationality: ");
+                String nationality = scanner.nextLine();
+                for (Guest g : guests) {
+                    if (g.getNationality().equalsIgnoreCase(nationality)) {
+                        results.add(g);
+                    }
+                }
+                break;
+            case 3:
+                results = guests;
+                break;
+            case 4:
+                System.out.print("Enter passport number: ");
+                String passport = scanner.nextLine();
+                for (Guest g : guests) {
+                    if (g.getPassportNumber().equalsIgnoreCase(passport)) {
+                        results.add(g);
+                    }
+                }
+                break;
+            default:
+                System.out.println("Invalid choice!");
+                return;
+        }
+
+        if (results.isEmpty()) {
+            System.out.println("No guests found.");
+        } else {
+            System.out.println("\n=== RESULTS (" + results.size() + " guests) ===");
+            for (Guest g : results) {
+                System.out.println("ID: " + g.getId() + " | Name: " + g.getFirstName() + " " + g.getLastName() +
+                        " | Email: " + g.getEmail() + " | Phone: " + g.getPhone() +
+                        " | Nationality: " + g.getNationality());
+            }
+        }
+    }
+}//to delete
