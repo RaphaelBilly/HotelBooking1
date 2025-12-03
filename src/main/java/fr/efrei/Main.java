@@ -132,5 +132,67 @@ public class Main {
         System.out.println("- 1 Suite (301)");
         System.out.println("- 1 Demo guest (Kruben Naidoo)");
     }
+
+    private static void registerNewGuest() {
+        System.out.println("\n-   NEW GUEST REGISTRATION   -");
+
+        System.out.print("First name: ");
+        String firstName = scanner.nextLine();
+
+        System.out.print("Last name: ");
+        String lastName = scanner.nextLine();
+
+        System.out.print("Email: ");
+        String email = scanner.nextLine();
+
+        System.out.print("Phone: ");
+        String phone = scanner.nextLine();
+
+        System.out.print("Nationality: ");
+        String nationality = scanner.nextLine();
+
+        System.out.print("Passport number: ");
+        String passport = scanner.nextLine();
+
+        System.out.print("Date of birth (YYYY-MM-DD): ");
+        String dobStr = scanner.nextLine();
+
+        LocalDate dateOfBirth;
+        try {
+            dateOfBirth = LocalDate.parse(dobStr);
+        } catch (Exception e) {
+            System.out.println("Invalid date format!");
+            return;
+        }
+
+        // Create guest
+        Guest guest = GuestFactory.createGuest(firstName, lastName, email, phone,
+                nationality, passport, dateOfBirth);
+
+        if (guest != null) {
+            IGuestRepository guestRepo = GuestRepository.getRepository();
+            Guest savedGuest = guestRepo.create(guest);
+            if (savedGuest != null) {
+                System.out.println("\nSUCCESS: Guest registered!");
+                System.out.println("Guest ID: " + savedGuest.getId());
+                System.out.println("Name: " + savedGuest.getFirstName() + " " + savedGuest.getLastName());
+
+                // Ask for reservation
+                System.out.print("\nWould you like to make a reservation now? (yes/no): ");
+                String response = scanner.nextLine().toLowerCase();
+                if (response.equals("yes") || response.equals("y")) {
+                    makeReservationForGuest(savedGuest);
+                }
+            } else {
+                System.out.println("ERROR: Failed to save guest!");
+            }
+        } else {
+            System.out.println("ERROR: Invalid guest data! Please check:");
+            System.out.println("- Email format");
+            System.out.println("- Phone format (international +XX or 10 digits)");
+            System.out.println("- Passport (6-12 alphanumeric characters)");
+            System.out.println("- Age (must be 18+)");
+        }
+    }
 }//to delete
 
