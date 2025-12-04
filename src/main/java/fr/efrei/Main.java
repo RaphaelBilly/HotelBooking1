@@ -874,4 +874,65 @@ public class Main {
             }
         }
     }
+
+    private static Room findRoomByNumber(int roomNumber) {
+        ISingleRepository singleRepo = SingleRepository.getRepository();
+        IDoubleRepository doubleRepo = DoubleRepository.getRepository();
+        ISuiteRepository suiteRepo = SuiteRepository.getRepository();
+
+        Single single = singleRepo.read(roomNumber);
+        if (single != null) return single;
+
+        DoubleRoom doubleRoom = doubleRepo.read(roomNumber);
+        if (doubleRoom != null) return doubleRoom;
+
+        Suite suite = suiteRepo.read(roomNumber);
+        return suite;
+    }
+
+    private static boolean isRoomAvailable(Room room, Date start, Date end) {
+        for (Reservation res : room.getReservations()) {
+            if (datesOverlap(start, end, res.getArrival(), res.getDeparture())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isRoomAvailableForPeriod(Room room, Date start, Date end) {
+        return isRoomAvailable(room, start, end);
+    }
+
+    private static boolean datesOverlap(Date start1, Date end1, Date start2, Date end2) {
+        return start1.before(end2) && end1.after(start2);
+    }
+
+    private static void addReservationToRoom(Room room, Reservation reservation) {
+        room.getReservations().add(reservation);
+    }
+
+    private static void removeReservationFromRoom(Room room, Reservation reservation) {
+        room.getReservations().remove(reservation);
+    }
+
+    private static Room findRoomByReservation(Reservation reservation) {
+        ISingleRepository singleRepo = SingleRepository.getRepository();
+        IDoubleRepository doubleRepo = DoubleRepository.getRepository();
+        ISuiteRepository suiteRepo = SuiteRepository.getRepository();
+
+        List<Single> singles = singleRepo.getAll();
+        List<DoubleRoom> doubleRooms = doubleRepo.getAll();
+        List<Suite> suites = suiteRepo.getAll();
+
+        for (Single s : singles) {
+            if (s.getReservations().contains(reservation)) return s;
+        }
+        for (DoubleRoom d : doubleRooms) {
+            if (d.getReservations().contains(reservation)) return d;
+        }
+        for (Suite s : suites) {
+            if (s.getReservations().contains(reservation)) return s;
+        }
+        return null;
+    }
 }//to delete
