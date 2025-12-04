@@ -699,7 +699,6 @@ public class Main {
         // Calendar header
         System.out.println(" Su Mo Tu We Th Fr Sa");
 
-
         for (int i = 1; i < firstDayOfWeek; i++) {
             System.out.print("   ");
         }
@@ -713,7 +712,6 @@ public class Main {
             boolean isReserved = isDateReserved(room, currentDate);
             boolean isCheckIn = isCheckInDate(room, currentDate);
             boolean isCheckOut = isCheckOutDate(room, currentDate);
-
 
             String dayStr = String.format("%2d", day);
 
@@ -742,6 +740,137 @@ public class Main {
                 SimpleDateFormat sdf = new SimpleDateFormat("MMM dd");
                 System.out.println("- " + sdf.format(res.getArrival()) + " to " +
                         sdf.format(res.getDeparture()));
+            }
+        }
+    }
+
+    private static void checkRoomAvailabilityForDates() {
+        System.out.println("\n-   CHECK ROOM AVAILABILITY    -");
+
+        System.out.print("Check-in date (YYYY-MM-DD): ");
+        Date checkIn = promptForDate("");
+
+        System.out.print("Check-out date (YYYY-MM-DD): ");
+        Date checkOut = promptForDate("");
+
+        if (!checkOut.after(checkIn)) {
+            System.out.println("ERROR: Check-out must be after check-in!");
+            return;
+        }
+
+        System.out.println("\n-   ROOMS AVAILABLE from " +
+                dateFormat.format(checkIn) + " to " +
+                dateFormat.format(checkOut) + "   -");
+
+        List<Room> availableRooms = new ArrayList<>();
+        List<Room> allRooms = getAllRooms();
+
+        for (Room room : allRooms) {
+            if (isRoomAvailableForPeriod(room, checkIn, checkOut)) {
+                availableRooms.add(room);
+            }
+        }
+
+        if (availableRooms.isEmpty()) {
+            System.out.println("No rooms available for selected dates.");
+
+            suggestAlternativeDates(checkIn, checkOut);
+        } else {
+            displayRoomsByType("Single", filterRoomsByType(availableRooms, Single.class));
+            displayRoomsByType("Double", filterRoomsByType(availableRooms, DoubleRoom.class));
+            displayRoomsByType("Suite", filterRoomsByType(availableRooms, Suite.class));
+
+            System.out.println("\nTotal: " + availableRooms.size() + " room(s) available");
+
+            // Option to view calendar
+            System.out.print("\nView calendar for a specific room? (yes/no): ");
+            String response = scanner.nextLine().toLowerCase();
+            if (response.equals("yes") || response.equals("y")) {
+                System.out.print("Enter room number: ");
+                int roomNum = getIntInput("");
+                Room selectedRoom = findRoomByNumber(roomNum);
+                if (selectedRoom != null && availableRooms.contains(selectedRoom)) {
+                    displaySingleRoomCalendar(selectedRoom);
+                }
+            }
+        }
+    }
+
+    private static void showAvailableRoomsForDates(Date checkIn, Date checkOut) {
+        System.out.println("\n-   AVAILABLE ROOMS   -");
+        System.out.println("Period: " + dateFormat.format(checkIn) + " to " + dateFormat.format(checkOut));
+
+        ISingleRepository singleRepo = SingleRepository.getRepository();
+        IDoubleRepository doubleRepo = DoubleRepository.getRepository();
+        ISuiteRepository suiteRepo = SuiteRepository.getRepository();
+
+        List<Single> singles = singleRepo.getAll();
+        List<DoubleRoom> doubleRooms = doubleRepo.getAll();
+        List<Suite> suites = suiteRepo.getAll();
+
+        int availableCount = 0;
+
+        System.out.println("\nSINGLE ROOMS:");
+        for (Single s : singles) {
+            if (isRoomAvailableForPeriod(s, checkIn, checkOut)) {
+                System.out.println("- Room " + s.getRoomNumber() + ": €" + s.getPricePerNight() + "/night");
+                availableCount++;
+            }
+        }
+
+        System.out.println("\nDOUBLE ROOMS:");
+        for (DoubleRoom d : doubleRooms) {
+            if (isRoomAvailableForPeriod(d, checkIn, checkOut)) {
+                System.out.println("- Room " + d.getRoomNumber() + ": €" + d.getPricePerNight() + "/night");
+                availableCount++;
+            }
+        }
+
+        System.out.println("\nSUITES:");
+        for (Suite s : suites) {
+            if (isRoomAvailableForPeriod(s, checkIn, checkOut)) {
+                System.out.println("- Suite " + s.getRoomNumber() + ": €" + s.getPricePerNight() + "/night");
+                availableCount++;
+            }
+        }
+
+        if (availableCount == 0) {
+            System.out.println("\nNo rooms available for these dates.");
+        } else {
+            System.out.println("\nTotal: " + availableCount + " room(s) available");
+        }
+    }
+
+    private static int getIntInput(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                return Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number!");
+            }
+        }
+    }
+
+    private static double getDoubleInput(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                return Double.parseDouble(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number!");
+            }
+        }
+    }
+
+    private static Date promptForDate(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                String dateStr = scanner.nextLine();
+                return dateFormat.parse(dateStr);
+            } catch (Exception e) {
+                System.out.println("Invalid date format! Use YYYY-MM-DD");
             }
         }
     }
